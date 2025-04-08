@@ -43,20 +43,23 @@
 [![er-db.png](https://i.postimg.cc/sxVGts7h/er-db.png)](https://postimg.cc/S2vK90ZS)
 
 ## Диаграмма взаимодействия
-    A[FlightRadar24 API] --> B[collector.py] 
-
-    B --> C [parse]
+    A[main.py] --> B[collector.py] 
+    A --> C[processing.py]
+    A --> D[dashboard.py]
+    E[FlightRadar24 API] --> B
     
-    C --> D{processing.py}
+    B --> F [parse]
     
-    D --> E[hourly_report]
+    F --> C
     
-    D --> F[airline_report]
+    C --> G[hourly_report]
     
-    D --> G[model_report]
+    C --> H[airline_report]
     
-    E --> H[dashboard.py]
+    C --> I[model_report]
     
-    F --> G
+    G --> D
     
-    G --> G
+    H --> D
+    
+    I --> D
