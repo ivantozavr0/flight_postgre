@@ -38,6 +38,10 @@
 - model VARCHAR(50), &mdash; список всех моделей самолетов
 - numb Smallint &mdash; список всех моделей самолетов
 
+## ER-диаграмма
+
+[![er-db.png](https://i.postimg.cc/sxVGts7h/er-db.png)](https://postimg.cc/S2vK90ZS)
+
 ## Диаграмма взаимодействия
     A[FlightRadar24 API] --> B[collector.py] 
 
