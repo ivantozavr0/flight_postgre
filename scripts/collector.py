@@ -6,32 +6,40 @@ from FlightRadar24 import FlightRadar24API
 import psycopg2
 import logging
 
+# логирование
 logging.basicConfig(
     filename='logs/collector.log',
     level=logging.INFO,
     format='%(asctime)s - %(message)s'
 )
 
+
 def parse_data():
+    # координаты для черного моря 
     minlat, maxlat, minlon, maxlon = 41.0, 46.0, 28.0, 42.0
     
     #BBOX = "46.0,41.0,28.0,42.0"
     BBOX = str(maxlat) + "," + str(minlat) + "," + str(minlon) + "," + str(maxlon)  # черное море: max lat, min lat, min lon, max lon
+    # отсюда берем первичную информацию
     url = f"https://data-cloud.flightradar24.com/zones/fcgi/feed.js?bounds={BBOX}"
     headers = {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     response = requests.get(url, headers=headers)
-    data = response.json() # первые 2 ключа - это служебная информация, а дальше уже то, что нужно (ключи - это id самолета)
+    data = response.json() 
     
+    # первые 2 ключа - это служебная информация, а дальше уже то, что нужно (ключи - это id самолета)
     flight_ids = list(data.keys())[2:]
-    
+
+    # время получения 
     cur_time = datetime.datetime.now()
-    
+
+    # вспомогательный класс. fr_api.get_flight_details принимает объект у которого есть поле id
     class Foo:
         def __init__(self, id_=None):
             self.id = id_
-    
+
+    # подключение 
     conn = psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "db"),
         database=os.getenv("POSTGRES_DB", "flightradardb"),
@@ -43,7 +51,8 @@ def parse_data():
     logging.info("start parsing")
 
     cursor = conn.cursor()
-    
+
+    # эта таблица постоянно пересоздается
     cursor.execute("DROP TABLE IF EXISTS parse")
     
     # Создание таблицы
@@ -63,6 +72,7 @@ def parse_data():
     
     for j, flight_id in enumerate(flight_ids):
         foo.id = flight_id
+        # посылаем запросы на FlightRadar24. Быть может, какие-то маршруты скрыты
         try:
             flight_details = fr_api.get_flight_details(foo)
             if not flight_details:
@@ -84,7 +94,8 @@ def parse_data():
             for point in flighttrack:
                 latitude = point.get("lat") # или lat, в зависимости от структуры данных
                 longitude = point.get("lng") # или lng, в зависимости от структуры данных
-                
+
+                 # отслеживаем маршрут только в акватории Черного моря
                 if minlat <= latitude <= maxlat and minlon <= longitude <= maxlon:
                     filteredtrack.append([latitude, longitude])
                 
@@ -101,6 +112,7 @@ def parse_data():
             VALUES (%s, %s, %s, %s, %s, %s)""", row)
             conn.commit() # Committing inside the loop
             time.sleep(0.6)
+            # если вдруг что-то пошло не так
         except Exception as e:
             print(f"Произошла ошибка при обработке flight_id {flight_id}: {e}")
             logging.info(f"Произошла ошибка при обработке flight_id {flight_id}: {e}")
