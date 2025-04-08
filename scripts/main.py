@@ -4,8 +4,10 @@ import subprocess
 from signal import signal, SIGINT
 import logging
 
+# переменная для фонового процесса
 dashboard_process = None
 
+#логирование
 logging.basicConfig(
     filename='logs/main.log',
     level=logging.INFO,
@@ -13,7 +15,7 @@ logging.basicConfig(
 )
 
 def run_data_job():
-    """Запуск только сбора и обработки данных"""
+    """запуск только сбора и обработки данных"""
     try:
         logging.info("Starting collector")
         subprocess.run(['python', 'scripts/collector.py'], check=True)
@@ -24,7 +26,7 @@ def run_data_job():
         print(f"Ошибка в задаче: {e}")
 
 def start_dashboard():
-    """Запуск дашборда в отдельном процессе"""
+    """запуск дашборда в отдельном фоновом процессе"""
     global dashboard_process
     dashboard_process = subprocess.Popen(
         ['python', 'scripts/dashboard.py'],
@@ -33,7 +35,7 @@ def start_dashboard():
     )
 
 def shutdown(signal_received, frame):
-    """Обработка завершения работы"""
+    """обработка завершения работы"""
     if dashboard_process:
         dashboard_process.terminate()
     exit(0)
@@ -42,6 +44,7 @@ def main():
 
     logging.info("Starting application")
 
+    # время между сборами информации
     time_to_wait = 3.5
     
     print("\033[1;37;40m \n----Вы начали выполнение мониторинга полетов над Черным морем")
@@ -50,14 +53,14 @@ def main():
     print(f"\033[1;37;40m ----Дашборд будет обновляться каждые 2.5 минуты \n")
     signal(SIGINT, shutdown)  # Обработка Ctrl+C
     
-    # Первоначальный запуск
+    # первоначальный запуск
     start_dashboard()
     
     #time.sleep(45)
     
     run_data_job()  # Первый сбор данных
     
-    # Настройка расписания
+    # настройка расписания
     schedule.every(time_to_wait).minutes.do(run_data_job)
    
     while True:
