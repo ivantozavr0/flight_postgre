@@ -3,6 +3,8 @@ import os
 import datetime
 import logging
 
+# здесь будет обработка. щаполним таблицу с маршрутами в пределах последнего часа, составим статистику по количеству бортов по авиалиниям и маршрутам
+
 logging.basicConfig(
     filename='logs/processing.log',
     level=logging.INFO,
@@ -13,6 +15,7 @@ logging.basicConfig(
 def process_data():
     #-------------------------------удаляем все строки, которым больше часа
 
+    # достаем загруженные данные
     conn = psycopg2.connect(
         host=os.getenv("POSTGRES_HOST", "db"),
         database=os.getenv("POSTGRES_DB", "flightradardb"),
@@ -23,6 +26,7 @@ def process_data():
 
     cursor = conn.cursor()
 
+    #если таблицы еще нет
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS hourly_report (
             icao VARCHAR(10),
@@ -35,10 +39,12 @@ def process_data():
     
     logging.info("start processing")
 
+    # время последней загрузки маршрутов
     cursor.execute("SELECT time FROM parse LIMIT 1") 
     parse_time = cursor.fetchall()[0][0]
     #print(parse_time)
 
+    # оставим только те данные, которые записаны не более часа назад
     sql_query = """
         DELETE FROM hourly_report
         WHERE EXTRACT(EPOCH FROM (%s - hourly_report.time)) > 3600
@@ -66,7 +72,7 @@ def process_data():
 
     cursor = conn.cursor()
     
-    # информация по некоторым icao могла обновиться, перезапишем ее
+    # если какие-то маршруты встречались за последний час и были в файле hourly_report.csv, но при этом они есть и в свежих данных, то значит информация по ним обновилась и мы должны такие icao перезаписать 
     cursor.execute("""DELETE FROM hourly_report 
 WHERE hourly_report.callsign IN (SELECT parse.callsign FROM parse)""")
 
