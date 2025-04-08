@@ -65,14 +65,15 @@ def create_trail_figure():
     #----------------------------------------это граф для рисунка-карты
 
     fig = go.Figure()
-
+#загружаем все доступные plotly краски
     color_palette = plotly.colors.qualitative.Plotly
     counter = 0
 
     for index, row in df_trails.iterrows(): 
+         # формируем маршрут
         latitudes = [point[0] for point in row['trail']]
         longitudes = [point[1] for point in row['trail']]
-
+        #добавляем новую линию
         fig.add_trace(go.Scattergeo(
             lat=latitudes,
             lon=longitudes,
@@ -83,7 +84,7 @@ def create_trail_figure():
             legendgrouptitle_text=row['model']
         ))
 
-    # добавили карту земли
+    # добавили натройки графика
     fig.update_layout(
     showlegend = True,
     geo = dict(
