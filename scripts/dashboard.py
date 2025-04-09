@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import plotly
 import psycopg2
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
 import logging
 
 # это дашборд. здесь рисуются маршруты всех самолетов за последний час над Черным морем и гистограммы распределения самолетов по авиалиниям и моделям
@@ -163,7 +163,8 @@ def create_model_figure():
 
 # обновляем информацию о последнем обновлении дашборда
 def create_title():
-    update_time = datetime.now(timezone.utc)
+    update_time = datetime.now() + timedelta(hours=3)
+    logging.info(f"Последнее обновление: {update_time}")
     return f"Последнее обновление: {update_time}"
 
 
@@ -184,7 +185,7 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
              style={
             'color': 'white'
         }),
-    html.Div(children="""!!! По непонятной причине модуль datetime при развертывании на docker дает время по UTC+00 (минус 3 часа по сравнению с московским), исправить не получилось :(""", 
+    html.Div(children="""!!! По непонятной причине модуль datetime при развертывании на docker дает время по UTC+00 (минус 3 часа по сравнению с московским), поэтому пришлось прибавить эти 3 часа. Так что если на вашей машине такой проблемы не возникает, то вы можете оказаться в будущем :)""", 
              style={
             'color': 'white'
         }),

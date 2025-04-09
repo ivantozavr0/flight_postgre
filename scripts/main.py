@@ -4,7 +4,7 @@ import subprocess
 from signal import signal, SIGINT
 import logging
 
-# переменная для фонового процесса
+# переменная для фонового процесса - дашборда
 dashboard_process = None
 
 #логирование
